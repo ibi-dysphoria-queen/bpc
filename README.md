@@ -63,7 +63,7 @@ SCRUM-12 (FR-ORG-01): a new organisation registers for free on `/register` with 
 
 SCRUM-104 (SI-06, CR-09): the team does not implement authentication itself. Sign-in, sign-up, e-mail verification (with a code) and password reset are handled by **Clerk**; the database holds no passwords (QS-SEC-02).
 
-**Why Clerk:** it runs with Cloudflare Workers (`@clerk/backend` verifies sessions in the Worker, the browser part loads from Clerk's CDN without a build step), its free plan is far more than enough for this project (50,000 monthly users), and it has ready-made sign-in and sign-up forms with e-mail verification and password reset. EU data location: not checked yet; see open points in the PR.
+**Why Clerk:** it runs with Cloudflare Workers (`@clerk/backend` verifies sessions in the Worker, the browser part loads from Clerk's CDN without a build step), its free plan is far more than enough for this project (50,000 monthly users), and it has ready-made sign-in and sign-up forms with e-mail verification and password reset. Data location: Clerk stores user accounts in the US, not the EU; the customer accepted this on 29 Oct 2026 because Clerk is certified under the EU-US Data Privacy Framework.
 
 How it fits together:
 
