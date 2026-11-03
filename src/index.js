@@ -75,7 +75,8 @@ async function startCheckRoute(request, env) {
     return json({ error: signedIn.error ?? 'NOT_SIGNED_IN' }, signedIn.error === 'NOT_REGISTERED' ? 403 : 401);
   }
 
-  const { vat, fn } = await readJson(request);
+  const body = (await readJson(request)) ?? {};
+  const { vat, fn } = body;
   const result = await startCheck({ db: env.DB }, signedIn.user, { vat, fn });
 
   if (result.ok) return json({ requestId: result.requestId }, 202);

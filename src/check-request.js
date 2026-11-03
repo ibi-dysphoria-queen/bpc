@@ -1,39 +1,33 @@
 // SCRUM-16: start a partner check by VAT number (optional FN).
 
-// One regex per EU country, keyed by the 2-letter prefix.
+import { splitVat } from './adapters/vies.js';
+
+// Stricter formats for some countries, on top of splitVat.
 const VAT_FORMATS = {
   AT: /^ATU\d{8}$/, // ATU + 8 digits
   DE: /^DE\d{9}$/, // DE + 9 digits
-  // more countries later
 };
 
-// Takes whatever the user typed and returns either: { ok: true, vat: 'ATU12345678' } (cleaned up) or { ok: false, error: 'INVALID_VAT' }
+// Returns { ok: true, vat: 'ATU12345678' } (cleaned up) or { ok: false, error: 'INVALID_VAT' }.
+// Any EU VAT number is accepted (splitVat in the VIES adapter knows every EU prefix).
 export function validateVat(input) {
-  // if input is not a string, return the error
   if (typeof input !== 'string') {
     return { ok: false, error: 'INVALID_VAT' };
   }
 
-  // remove spaces and dots, make it uppercase
-  const cleaned = input.replace(/[\s.]/g, '').toUpperCase();
-
-  // the first two letters are the country
-  const country = cleaned.slice(0, 2);
-
-  // look up the regex for that country
-  const re = VAT_FORMATS[country];
-
-  // unknown country -> error
-  if (!re) {
+  // null if it is not an EU prefix followed by a plausible number
+  const parts = splitVat(input);
+  if (!parts) {
     return { ok: false, error: 'INVALID_VAT' };
   }
 
-  // wrong format for that country -> error
-  if (!re.test(cleaned)) {
+  const vat = `${parts.countryCode}${parts.vatNumber}`;
+  const format = VAT_FORMATS[parts.countryCode];
+  if (format && !format.test(vat)) {
     return { ok: false, error: 'INVALID_VAT' };
   }
 
-  return { ok: true, vat: cleaned }; // passed everything: success
+  return { ok: true, vat };
 }
 
 // The FN is optional. Returns { ok: true, fn: '123456a' }, { ok: true, fn: null } when nothing was entered, or { ok: false, error: 'INVALID_FN' }.
