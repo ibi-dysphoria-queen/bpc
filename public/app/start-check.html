@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BizPartnerCheck – Start a check</title>
+</head>
+<body>
+  <h1>Start a partner check</h1>
+  <form id="check-form">
+    <label>VAT number <input name="vat" required placeholder="ATU12345678"></label><br>
+    <label>FN (optional) <input name="fn" placeholder="123456a"></label><br>
+    <button type="submit">Start check</button>
+  </form>
+  <p id="message" role="status"></p>
+
+  <script>
+    // SCRUM-16: sends the form to POST /api/requests and shows the result.
+    const messages = {
+      INVALID_VAT: 'This is not a valid EU VAT number.',
+      INVALID_FN: 'The FN must be digits followed by one letter, e.g. 123456a.',
+      FORBIDDEN: 'Your role is not allowed to start checks.',
+      NOT_SIGNED_IN: 'Please sign in first.',
+      NOT_REGISTERED: 'Your account is not registered with BizPartnerCheck.',
+    };
+
+    document.getElementById('check-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vat: form.get('vat'), fn: form.get('fn') }),
+      });
+      const body = await response.json();
+      document.getElementById('message').textContent = response.ok
+        ? `Check started. Request ID: ${body.requestId}`
+        : messages[body.error] ?? 'Something went wrong.';
+    });
+  </script>
+</body>
+</html>

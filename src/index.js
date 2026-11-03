@@ -4,6 +4,7 @@
 
 import { clerkIdentity, currentUser } from './auth.js';
 import { refreshBmfFeed } from './bmf-feed.js';
+import { startCheck } from './check-request.js';
 import { languageOf } from './language.js';
 import { registerOrganisation } from './registration.js';
 
@@ -66,6 +67,22 @@ async function appPage(request, env) {
   return response;
 }
 
+// SCRUM-16: POST /api/requests { vat, fn } -> 202 { requestId }
+async function startCheckRoute(request, env) {
+  // Same sign-in check as /api/me.
+  const signedIn = await currentUser({ db: env.DB, identity: identityOf(env) }, request);
+  if (!signedIn.user) {
+    return json({ error: signedIn.error ?? 'NOT_SIGNED_IN' }, signedIn.error === 'NOT_REGISTERED' ? 403 : 401);
+  }
+
+  const body = (await readJson(request)) ?? {};
+  const { vat, fn } = body;
+  const result = await startCheck({ db: env.DB }, signedIn.user, { vat, fn });
+
+  if (result.ok) return json({ requestId: result.requestId }, 202);
+  return json({ error: result.error }, result.error === 'FORBIDDEN' ? 403 : 400);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
@@ -73,6 +90,7 @@ export default {
     if (request.method === 'POST' && pathname === '/api/organisations') return register(request, env);
     if (request.method === 'GET' && pathname === '/api/config') return config(env);
     if (request.method === 'GET' && pathname === '/api/me') return me(request, env);
+    if (request.method === 'POST' && pathname === '/api/requests') return startCheckRoute(request, env);
     if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
     if (pathname === '/app' || pathname.startsWith('/app/')) return appPage(request, env);
     return env.ASSETS.fetch(request);
