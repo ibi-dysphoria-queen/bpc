@@ -34,7 +34,7 @@
 
   <p id="message" role="status"></p>
   <!-- SCRUM-104: after registering, the admin creates the Clerk account with the same
-       e-mail address; Clerk sends the verification link (FR-ORG-02). -->
+       e-mail address; Clerk e-mails a verification code that is entered here (FR-ORG-02). -->
   <div id="sign-up"></div>
 
   <script>
@@ -56,7 +56,7 @@
         INVALID_email: 'Please enter a valid e-mail address.',
         ORGANISATION_EXISTS: 'An organisation with this company register number is already registered.',
         EMAIL_IN_USE: 'This e-mail address is already used by another account.',
-        done: 'Your organisation is registered. Now choose a password. We will then send you an e-mail with a link to confirm your address.',
+        done: 'Your organisation is registered. Now choose a password. We will then send you an e-mail with a code to confirm your address.',
         failed: 'Something went wrong. Please try again.',
       },
       de: {
@@ -76,7 +76,7 @@
         INVALID_email: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
         ORGANISATION_EXISTS: 'Eine Organisation mit dieser Firmenbuchnummer ist bereits registriert.',
         EMAIL_IN_USE: 'Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.',
-        done: 'Ihre Organisation ist registriert. Wählen Sie jetzt ein Passwort. Danach senden wir Ihnen eine E-Mail mit einem Link, um Ihre Adresse zu bestätigen.',
+        done: 'Ihre Organisation ist registriert. Wählen Sie jetzt ein Passwort. Danach senden wir Ihnen eine E-Mail mit einem Code, um Ihre Adresse zu bestätigen.',
         failed: 'Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.',
       },
     };
@@ -98,19 +98,6 @@
         slot.textContent = code ? (t[`${code}_${slot.dataset.errorFor}`] ?? t[code]) : '';
       }
     };
-
-    // The link in Clerk's verification e-mail comes back to this page with
-    // __clerk_status in the URL. Let Clerk finish the sign-up, then go to the app.
-    if (new URLSearchParams(location.search).has('__clerk_status')) {
-      form.hidden = true;
-      loadClerk()
-        .then((clerk) => clerk.handleEmailLinkVerification({
-          redirectUrlComplete: '/app/',
-          redirectUrl: '/app/',
-          onVerifiedOnOtherDevice: () => location.replace('/login'),
-        }))
-        .catch(() => { message.textContent = t.failed; });
-    }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
