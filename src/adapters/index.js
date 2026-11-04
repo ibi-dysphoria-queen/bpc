@@ -10,7 +10,7 @@ import { createFirmenbuchAdapter } from './firmenbuch.js';
 import { createGisaAdapter } from './gisa.js';
 import { createHfuAdapter } from './hfu.js';
 import { createViesAdapter } from './vies.js';
-
+import fs from 'fs';
 // Same values as the CHECK constraints on check_results.
 export const SOURCES = ['VIES', 'BMF', 'HFU', 'FIRMENBUCH', 'GISA'];
 export const STATES = ['VALID', 'INVALID', 'NOT_FOUND', 'UNAVAILABLE'];
@@ -27,10 +27,24 @@ const FACTORIES = {
   GISA: createGisaAdapter,
 };
 
+const mock = (source, check) => ({ source, check });
 // Builds the adapter for every source. `overrides` replaces single sources,
 // e.g. { VIES: mockAdapter }, and leaves the others as they are. `options`
 // (e.g. { fetch }) is passed to every adapter.
 export function createAdapters(env, overrides = {}, options = {}) {
+ //a mocking setup that reads the mock.txt file for overwrite requests and adds it to the existing ones
+  fs.readFile('mock.txt', 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading file:', err);
+    }
+    else {
+      if (data.length != 0){
+    const mockarray = data.split(" ");
+    for (let i = 0; i < (mockarray.length/2); i++) {
+          overrides[mockarray[i]] =mock(mockarray[i], async () => ({ state: mockarray[i+1] }));
+        }
+    }
+  }});
   return SOURCES.map((source) => overrides[source] ?? FACTORIES[source](env, options));
 }
 
